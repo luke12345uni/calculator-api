@@ -1,8 +1,8 @@
 pipeline {
     agent {
         docker {
-            image 'python:3.12'          // Python and pip already installed
-            args '-u root:root'          // run as root for pip installs
+            image 'python:3.12'
+            args '-u root:root -v /var/run/docker.sock:/var/run/docker.sock'
         }
     }
 
@@ -32,8 +32,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 echo "Building Docker image..."
-                // Use host Docker (requires Docker-in-Docker or socket mount)
-                sh 'docker build -t calculator-api:latest . || echo "Docker not available, skipping"'
+                sh 'docker build -t calculator-api:latest .'
             }
         }
     }
