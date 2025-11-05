@@ -1,47 +1,46 @@
 pipeline {
-    agent {
-        docker {
-            image 'python:3.12'
-            args '-v /var/run/docker.sock:/var/run/docker.sock'
-        }
+    agent any
+
+    environment {
+        IMAGE_NAME = "calculator-api"
+        PYTHON_VERSION = "3.12"
     }
 
     stages {
-        stage('Build') {
+        stage('Checkout') {
             steps {
-                echo 'Building calculator app...'
-                sh 'python --version'
+                git branch: 'main', url: 'https://github.com/luke12345uni/calculator-api.git'
             }
         }
 
-        stage('Test') {
+        stage('Install Dependencies') {
             steps {
-                echo 'Running tests...'
-                sh 'pytest || echo "No tests found"'
+                sh 'python3 -m pip install --upgrade pip'
+                sh 'pip install -r requirements.txt'
             }
         }
 
-        stage('Package') {
+        stage('Run Unit Tests') {
             steps {
-                echo 'Packaging app...'
-                sh 'zip -r app.zip .'
+                sh 'pytest'
             }
         }
 
-        stage('Deploy') {
+        stage('Build Docker Image') {
             steps {
-                echo 'Deploy stage (placeholder)...'
+                script {
+                    docker.build("${IMAGE_NAME}:latest")
+                }
             }
         }
     }
 
     post {
         success {
-            echo 'Pipeline completed successfully!'
+            echo "✅ Pipeline completed successfully!"
         }
         failure {
-            echo 'Pipeline failed. Check console output for details.'
+            echo "❌ Pipeline failed!"
         }
     }
 }
-
