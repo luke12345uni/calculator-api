@@ -24,4 +24,4 @@ def divide(a: float, b: float):
 def health():
     return {"status": "ok"}
     print(health)
-    print("hi")
+    print("hii")
