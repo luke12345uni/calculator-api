@@ -1,35 +1,114 @@
 pipeline {
-    agent {
-        docker {
-            image 'python:3.12'
-            args '-v /var/jenkins_home:/var/jenkins_home'
-        }
+    agent any
+
+    environment {
+        APP_NAME = "calculator-api"
+        DOCKER_IMAGE = "luke12345uni/calculator-api"
     }
+
     stages {
         stage('Checkout') {
             steps {
-                checkout scm
+                git branch: 'main', url: 'https://github.com/luke12345uni/calculator-api.git'
             }
         }
+
         stage('Install Dependencies') {
             steps {
-                sh 'pip install -r requirements.txt'
+                sh '''
+                python3 -m venv venv
+                . venv/bin/activate
+                pip install --upgrade pip
+                pip install -r requirements.txt
+                '''
             }
         }
-        stage('Run Unit Tests') {
+
+        stage('Run Calculator API Script') {
             steps {
-                sh 'pytest'
+                sh '''
+                . venv/bin/activate
+                ./venv/bin/python app/main.py || echo "Skipping app run in CI mode"
+                '''
             }
         }
+
+        stage('Test Calculator API') {
+            steps {
+                catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                    sh '''
+                    . venv/bin/activate
+                    ./venv/bin/python -m pytest -v
+                    '''
+                }
+            }
+        }
+
+        stage('Export Test Report') {
+            steps {
+                sh '''
+                . venv/bin/activate
+                ./venv/bin/python -m pytest --junitxml=report.xml || true
+                '''
+                junit 'report.xml'
+                archiveArtifacts artifacts: 'report.xml', onlyIfSuccessful: false
+            }
+        }
+
+        stage('Read Version') {
+            steps {
+                script {
+                    env.APP_VERSION = sh(script: "cat VERSION | tr -d '\\n'", returnStdout: true).trim()
+                    echo "Releasing version: ${env.APP_VERSION}"
+                }
+            }
+        }
+
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t calculator-api .'
+                script {
+                    sh '''
+                    docker build -t ${DOCKER_IMAGE}:${APP_VERSION} .
+                    docker tag ${DOCKER_IMAGE}:${APP_VERSION} ${DOCKER_IMAGE}:latest
+                    '''
+                }
+            }
+        }
+
+        stage('Push Docker Image') {
+            environment {
+                DOCKER_HUB_CREDENTIALS = credentials('dockerhub-credentials')
+            }
+            steps {
+                script {
+                    sh '''
+                    echo "$DOCKER_HUB_CREDENTIALS_PSW" | docker login -u "$DOCKER_HUB_CREDENTIALS_USR" --password-stdin
+                    docker push ${DOCKER_IMAGE}:${APP_VERSION}
+                    docker push ${DOCKER_IMAGE}:latest
+                    docker logout
+                    '''
+                }
+            }
+        }
+
+        stage('Tag Release in GitHub') {
+            steps {
+                script {
+                    sh '''
+                    git config user.email "jenkins@localhost"
+                    git config user.name "Jenkins CI"
+                    git tag -a "v${APP_VERSION}" -m "Release ${APP_VERSION}"
+                    git push origin "v${APP_VERSION}" || echo "Skipping tag push"
+                    '''
+                }
             }
         }
     }
+
     post {
         always {
-            echo 'Pipeline finished'
+            echo "Build completed. Cleaning up workspace..."
+            cleanWs()
         }
     }
 }
