@@ -23,3 +23,5 @@ def divide(a: float, b: float):
 @app.get("/health")
 def health():
     return {"status": "ok"}
+    print(health)
+    print("hi")
