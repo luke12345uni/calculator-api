@@ -1,47 +1,39 @@
-version: '3.8'
-
 services:
-
-  # --- Docker-in-Docker (Docker daemon) ---
   jenkins-docker:
     image: docker:dind
     container_name: jenkins-docker
     privileged: true
     environment:
       - DOCKER_TLS_CERTDIR=/certs
-    ports:
-      - "2376:2376"
     volumes:
       - jenkins-docker-certs:/certs/client
       - jenkins-data:/var/jenkins_home
+    ports:
+      - "2376:2376"
     networks:
       jenkins:
         aliases:
           - docker
     command: --storage-driver overlay2
 
-  # --- Jenkins Server ---
   my-jenkins:
+    image: my-jenkins
     build:
       context: .
-    image: my-jenkins
     container_name: my-jenkins
     restart: on-failure
     environment:
       - DOCKER_HOST=tcp://docker:2376
       - DOCKER_CERT_PATH=/certs/client
       - DOCKER_TLS_VERIFY=1
-    ports:
-      - "8080:8080"
-      - "50000:50000"
     volumes:
       - jenkins-data:/var/jenkins_home
       - jenkins-docker-certs:/certs/client:ro
+    ports:
+      - "8080:8080"
+      - "50000:50000"
     networks:
-      jenkins:
-        aliases:
-          - jenkins
-          - docker  # <-- This is the fix: ensures Jenkins can reach the DinD daemon
+      - jenkins
 
 networks:
   jenkins:
