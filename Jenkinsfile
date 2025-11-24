@@ -23,7 +23,7 @@ pipeline {
                      ln -sf python3 /usr/bin/python || true
                   fi
 
-                  'pip3 install -r requirements.txt'              
+                  pip install -r requirements.txt            
                 '''
             }
         }
