@@ -28,14 +28,19 @@ pipeline {
         }
 
         stage('Test Calculator API') {
-            steps {
-                catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
-                    sh '''
-                    'pytest -v' 
-                    '''
-                }
-            }
-        }
+            steps { 
+
+                // run tests, but don't stop the pipeline if they fail 
+
+                catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') { 
+
+                    sh 'pytest -v' 
+
+                } 
+
+            } 
+
+        } 
 
         stage('Export Test Report') {
             steps {
