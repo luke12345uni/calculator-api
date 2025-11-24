@@ -32,8 +32,6 @@ pipeline {
                 catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                     sh '''
                     'pytest -v' 
-
-                } 
                     '''
                 }
             }
