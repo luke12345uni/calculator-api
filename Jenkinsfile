@@ -31,8 +31,9 @@ pipeline {
             steps {
                 catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                     sh '''
-                    . venv/bin/activate
-                    ./venv/bin/python -m pytest -v
+                    'pytest -v' 
+
+                } 
                     '''
                 }
             }
@@ -40,11 +41,16 @@ pipeline {
 
         stage('Export Test Report') {
             steps {
-                sh '''
-                . venv/bin/activate
-                ./venv/bin/python -m pytest --junitxml=report.xml || true
-                '''
-                junit 'report.xml'
+                // run pytest again just to produce XML 
+
+                sh 'pytest --junitxml=report.xml || true' 
+
+                // show results in Jenkins 
+
+                junit 'report.xml' 
+
+                // let us download the xml 
+
                 archiveArtifacts artifacts: 'report.xml', onlyIfSuccessful: false
             }
         }
