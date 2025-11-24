@@ -27,15 +27,6 @@ pipeline {
             }
         }
 
-        stage('Run Calculator API Script') {
-            steps {
-                sh '''
-                . venv/bin/activate
-                ./venv/bin/python app/main.py || echo "Skipping app run in CI mode"
-                '''
-            }
-        }
-
         stage('Test Calculator API') {
             steps {
                 catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
