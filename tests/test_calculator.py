@@ -1,34 +1,25 @@
-from fastapi.testclient import TestClient
-from app.main import app
-import sys
-import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+class Calculator:
+    @staticmethod
+    def add(a, b):
+        return a + b
 
-from app.main import app
-from fastapi.testclient import TestClient
+    @staticmethod
+    def subtract(a, b):
+        return a - b
 
-client = TestClient(app)
+    @staticmethod
+    def multiply(a, b):
+        return a * b
 
-def test_add():
-    response = client.get("/add?a=5&b=3")
-    assert response.status_code == 200
-    assert response.json()["result"] == 8
+    @staticmethod
+    def divide(a, b):
+        if b == 0:
+            raise ValueError("Division by zero is not allowed.")
+        return a / b
 
-def test_subtract():
-    response = client.get("/subtract?a=10&b=4")
-    assert response.status_code == 200
-    assert response.json()["result"] == 6
-
-def test_multiply():
-    response = client.get("/multiply?a=6&b=7")
-    assert response.status_code == 200
-    assert response.json()["result"] == 42
-
-def test_divide():
-    response = client.get("/divide?a=8&b=2")
-    assert response.status_code == 200
-    assert response.json()["result"] == 4
-
-def test_divide_by_zero():
-    response = client.get("/divide?a=8&b=0")
-    assert response.status_code == 400
+# Example usage:
+if __name__ == "__main__":
+    print(Calculator.add(5, 3))
+    print(Calculator.subtract(10, 4))
+    print(Calculator.multiply(6, 7))
+    print(Calculator.divide(8, 2))

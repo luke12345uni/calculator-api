@@ -1,29 +1,59 @@
-from fastapi import FastAPI, HTTPException
-# version test - webhook trigger 6
+def add(a, b):
+    return a + b
 
+def subtract(a, b):
+    return a - b
 
-app = FastAPI(title="Calculator API", version="1.0.0")
+def multiply(a, b):
+    return a * b
 
-@app.get("/add")
-def add(a: float, b: float):
-    return {"operation": "addition", "result": a + b}
-
-@app.get("/subtract")
-def subtract(a: float, b: float):
-    return {"operation": "subtraction", "result": a - b}
-
-@app.get("/multiply")
-def multiply(a: float, b: float):
-    return {"operation": "multiplication", "result": a * b}
-
-@app.get("/divide")
-def divide(a: float, b: float):
+def divide(a, b):
     if b == 0:
-        raise HTTPException(status_code=400, detail="Division by zero is not allowed.")
-    return {"operation": "division", "result": a / b}
+        raise ValueError("Division by zero is not allowed.")
+    return a / b
 
-@app.get("/health")
-def health():
-    return {"status": "ok"}
-    print(health)
-    print("hii")
+def main():
+    print("Simple Calculator")
+    print("-----------------")
+
+    while True:
+        print("\nChoose operation:")
+        print("1. Add")
+        print("2. Subtract")
+        print("3. Multiply")
+        print("4. Divide")
+        print("5. Exit")
+
+        choice = input("Enter choice (1-5): ")
+
+        if choice == "5":
+            print("Goodbye!")
+            break
+
+        if choice not in ["1", "2", "3", "4"]:
+            print("Invalid selection. Try again.")
+            continue
+
+        try:
+            a = float(input("Enter first number: "))
+            b = float(input("Enter second number: "))
+        except ValueError:
+            print("Invalid number. Try again.")
+            continue
+
+        try:
+            if choice == "1":
+                result = add(a, b)
+            elif choice == "2":
+                result = subtract(a, b)
+            elif choice == "3":
+                result = multiply(a, b)
+            elif choice == "4":
+                result = divide(a, b)
+
+            print(f"Result: {result}")
+        except Exception as e:
+            print(f"Error: {e}")
+
+if __name__ == "__main__":
+    main()
