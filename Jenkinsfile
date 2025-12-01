@@ -47,11 +47,11 @@ pipeline {
 
                 // run tests, but don't stop the pipeline if they fail 
 
-                catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') { 
+                // catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') { 
 
-                    sh 'pytest' 
+                    sh'pytest' 
 
-                } 
+                // } 
 
             } 
 
