@@ -2,7 +2,7 @@ pipeline {
   agent any
 
   environment {
-    DOCKERHUB = credentials('DockerHub')   // Provides DOCKERHUB_USR / DOCKERHUB_PSW
+    DOCKERHUB = credentials('dockerhub_credentials')   // Provides DOCKERHUB_USR / DOCKERHUB_PSW
   }
 
   stages {
