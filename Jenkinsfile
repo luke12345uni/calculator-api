@@ -59,14 +59,14 @@ pipeline {
             }
         }
 
-        stage('Read Version') {
-            steps {
-                script {
-                    env.APP_VERSION = sh(script: "cat VERSION | tr -d '\\n'", returnStdout: true).trim()
-                    echo "Releasing version: ${env.APP_VERSION}"
-                }
-            }
-        }
+        // stage('Read Version') {
+        //     steps {
+        //         script {
+        //             env.APP_VERSION = sh(script: "cat VERSION | tr -d '\\n'", returnStdout: true).trim()
+        //             echo "Releasing version: ${env.APP_VERSION}"
+        //         }
+        //     }
+        // }
 
         stage('Build Docker Image') {
             steps {
