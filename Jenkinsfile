@@ -1,4 +1,3 @@
-
 pipeline {
     agent any
 
@@ -14,6 +13,20 @@ pipeline {
             }
         }
 
+        stage('Install Dependencies') {
+            steps {
+                sh '''
+
+                 if ! command -v python3 >/dev/null 2>&1; then
+                    echo "Python3 not found, installing..."
+                    apk add --no-cache python3 py3-pip
+                     ln -sf python3 /usr/bin/python || true
+                  fi
+
+                  pip3 install -r requirements.txt            
+                '''
+            }
+        }
         // stage('Install Dependencies') {
         //     steps {
         //         sh '''
@@ -28,12 +41,6 @@ pipeline {
         //         '''
         //     }
         // }
-
-        stage('Run script') {
-            steps {
-                sh 'main.py'
-            }
-        }
 
         stage('Test Calculator API') {
             steps { 
@@ -66,14 +73,14 @@ pipeline {
             }
         }
 
-        // stage('Read Version') {
-        //     steps {
-        //         script {
-        //             env.APP_VERSION = sh(script: "cat VERSION | tr -d '\\n'", returnStdout: true).trim()
-        //             echo "Releasing version: ${env.APP_VERSION}"
-        //         }
-        //     }
-        // }
+        stage('Read Version') {
+            steps {
+                script {
+                    env.APP_VERSION = sh(script: "cat VERSION | tr -d '\\n'", returnStdout: true).trim()
+                    echo "Releasing version: ${env.APP_VERSION}"
+                }
+            }
+        }
 
         stage('Build Docker Image') {
             steps {
