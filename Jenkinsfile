@@ -1,38 +1,36 @@
-pipeline {
+ pipeline {
     agent any
 
     stages {
-        stage('Run Tests') {
+        stage('Checkout') {
             steps {
-                sh 'pytest'
+                // pulls your repo
+                git branch: 'main',
+                    url: 'https://github.com/luke12345uni/calculator-api'
             }
         }
 
-        stage('Run Calculator Script') {
+        stage('Setup Python (dind)') {
+            steps {
+                // if your Jenkins agent is like docker:dind (Alpine) and has no python
+                sh '''
+                  if ! command -v python3 >/dev/null 2>&1; then
+                    echo "Python3 not found, installing..."
+                    apk add --no-cache python3 py3-pip
+                    ln -sf python3 /usr/bin/python || true
+                  fi
+                '''
+            }
+        }
+
+        stage('Run script') {
             steps {
                 sh 'python3 main.py'
             }
         }
-
-        stage('Build Docker Image') {
+             stage('cleaning') {
             steps {
-                sh 'docker build -t calculator-app:latest .'
-            }
-        }
-
-        stage('Push Docker Image') {
-            environment {
-                DOCKER_HUB_CREDENTIALS = credentials('dockerhub-credentials')
-            }
-            steps {
-                script {
-                    sh '''
-                    echo "$DOCKER_HUB_CREDENTIALS_PSW" | docker login -u "$DOCKER_HUB_CREDENTIALS_USR" --password-stdin
-                    docker push ${DOCKER_IMAGE}:${APP_VERSION}
-                    docker push ${DOCKER_IMAGE}:latest
-                    docker logout
-                    '''
-                }
+               echo 'cleaning'
             }
         }
     }
