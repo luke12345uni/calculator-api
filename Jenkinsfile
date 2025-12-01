@@ -1,8 +1,5 @@
 pipeline {
 
-    /******************************
-     * Global Settings
-     ******************************/
     agent any
 
     environment {
