@@ -28,6 +28,16 @@ pipeline {
         //     }
         // }
 
+        stage('Install Python') {
+           steps {
+               sh '''
+                sudo apt-get update
+                sudo apt-get install -y python3 python3-pip
+                '''
+            }
+        }
+
+
         stage('Run script') {
             steps {
                 sh 'python3 main.py'
