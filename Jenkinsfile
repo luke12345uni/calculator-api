@@ -13,20 +13,20 @@ pipeline {
             }
         }
 
-        stage('Install Dependencies') {
-            steps {
-                sh '''
+        // stage('Install Dependencies') {
+        //     steps {
+        //         sh '''
 
-                 if ! command -v python3 >/dev/null 2>&1; then
-                    echo "Python3 not found, installing..."
-                    apk add --no-cache python3 py3-pip
-                     ln -sf python3 /usr/bin/python || true
-                  fi
+        //          if ! command -v python3 >/dev/null 2>&1; then
+        //             echo "Python3 not found, installing..."
+        //             apk add --no-cache python3 py3-pip
+        //              ln -sf python3 /usr/bin/python || true
+        //           fi
 
-                  pip3 install -r requirements.txt            
-                '''
-            }
-        }
+        //           pip3 install -r requirements.txt            
+        //         '''
+        //     }
+        // }
         // stage('Install Dependencies') {
         //     steps {
         //         sh '''
@@ -49,7 +49,7 @@ pipeline {
 
                 catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') { 
 
-                    sh 'pytest -v' 
+                    sh 'pytest' 
 
                 } 
 
