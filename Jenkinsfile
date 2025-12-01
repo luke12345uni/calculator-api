@@ -28,7 +28,7 @@ pipeline {
         stage('Test Calculator API') {
             agent {
                 docker {
-                    image 'python:3.11'
+                    image 'python3'
                 }
             }
             steps {
@@ -46,7 +46,7 @@ pipeline {
         stage('Export Test Report') {
             agent {
                 docker {
-                    image 'python:3.11'
+                    image 'python3'
                 }
             }
             steps {
