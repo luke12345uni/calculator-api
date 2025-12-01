@@ -12,9 +12,7 @@ pipeline {
 
     stages {
 
-        /******************************
-         * CHECKOUT SOURCE CODE
-         ******************************/
+
         stage('Checkout') {
             steps {
                 git branch: 'main', url: 'https://github.com/luke12345uni/calculator-api.git'
@@ -22,9 +20,6 @@ pipeline {
         }
 
 
-        /******************************
-         * RUN TESTS INSIDE PYTHON DOCKER IMAGE
-         ******************************/
         stage('Test Calculator API') {
             agent {
                 docker {
@@ -40,9 +35,7 @@ pipeline {
         }
 
 
-        /******************************
-         * GENERATE TEST REPORT
-         ******************************/
+
         stage('Export Test Report') {
             agent {
                 docker {
@@ -60,9 +53,7 @@ pipeline {
         }
 
 
-        /******************************
-         * READ VERSION FROM VERSION FILE
-         ******************************/
+
         stage('Read Version') {
             steps {
                 script {
@@ -73,9 +64,7 @@ pipeline {
         }
 
 
-        /******************************
-         * BUILD DOCKER IMAGE
-         ******************************/
+
         stage('Build Docker Image') {
             steps {
                 sh '''
@@ -86,9 +75,7 @@ pipeline {
         }
 
 
-        /******************************
-         * PUSH DOCKER IMAGE TO DOCKER HUB
-         ******************************/
+
         stage('Push Docker Image') {
             environment {
                 DOCKER_HUB = credentials('dockerhub-credentials')
@@ -104,9 +91,7 @@ pipeline {
         }
 
 
-        /******************************
-         * TAG RELEASE IN GITHUB
-         ******************************/
+
         stage('Tag Release in GitHub') {
             steps {
                 sh '''
@@ -121,9 +106,7 @@ pipeline {
     }
 
 
-    /******************************
-     * ALWAYS CLEAN WORKSPACE
-     ******************************/
+
     post {
         always {
             echo "Build completed. Cleaning up workspace..."
