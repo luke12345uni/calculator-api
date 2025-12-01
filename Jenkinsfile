@@ -2,6 +2,8 @@ pipeline {
   agent any
 
   environment {
+    APP_NAME = "calculator-api"
+    DOCKER_IMAGE = "luke12345uni/calculator-api"
     DOCKERHUB = credentials('dockerhub_credentials')   // Provides DOCKERHUB_USR / DOCKERHUB_PSW
   }
 
