@@ -1,25 +1,21 @@
-class Calculator:
-    @staticmethod
-    def add(a, b):
-        return a + b
+from app.main import add, subtract, multiply, divide
+import pytest
 
-    @staticmethod
-    def subtract(a, b):
-        return a - b
+def test_add():
+    assert add(20, 20) == 40
 
-    @staticmethod
-    def multiply(a, b):
-        return a * b
+def test_add_fail():
+    assert add(5, 5) == 10  # expected to pass
 
-    @staticmethod
-    def divide(a, b):
-        if b == 0:
-            raise ValueError("Division by zero is not allowed.")
-        return a / b
+def test_subtract():
+    assert subtract(10, 3) == 7
 
-# Example usage:
-if __name__ == "__main__":
-    print(Calculator.add(5, 3))
-    print(Calculator.subtract(10, 4))
-    print(Calculator.multiply(6, 7))
-    print(Calculator.divide(8, 2))
+def test_multiply():
+    assert multiply(6, 7) == 42
+
+def test_divide():
+    assert divide(8, 2) == 4
+
+def test_divide_by_zero():
+    with pytest.raises(ValueError):
+        divide(10, 0)
