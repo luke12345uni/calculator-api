@@ -1,37 +1,48 @@
- pipeline {
-    agent any
+pipeline {
+  agent any
 
-    stages {
-        stage('Checkout') {
-            steps {
-                // pulls your repo
-                git branch: 'main',
-                    url: 'https://github.com/luke12345uni/calculator-api'
-            }
-        }
+  environment {
+    DOCKERHUB = credentials('DockerHub')   // Provides DOCKERHUB_USR / DOCKERHUB_PSW
+  }
 
-        stage('Setup Python (dind)') {
-            steps {
-                // if your Jenkins agent is like docker:dind (Alpine) and has no python
-                sh '''
-                  if ! command -v python3 >/dev/null 2>&1; then
-                    echo "Python3 not found, installing..."
-                    apk add --no-cache python3 py3-pip
-                    ln -sf python3 /usr/bin/python || true
-                  fi
-                '''
-            }
-        }
+  stages {
 
-        stage('Run script') {
-            steps {
-                sh 'python3 main.py'
-            }
-        }
-             stage('cleaning') {
-            steps {
-               echo 'cleaning'
-            }
-        }
+    stage('Docker Login') {
+      steps {
+        sh 'echo "$DOCKERHUB_PSW" | docker login -u "$DOCKERHUB_USR" --password-stdin'
+      }
     }
+
+    stage('Pull , build and Run dockerfile ') {
+      steps {
+        sh '''
+          # Stop and remove running container
+          docker stop calculator-api || true
+          docker rm calculator-api || true
+
+          # Remove old image
+          docker rmi luke12345uni/calculator-api || true
+
+          # Build new Docker image
+          docker build -t luke12345uni/calculator-api .
+
+          # Start with docker compose
+          docker compose up -d
+        '''
+      }
+    }
+
+    stage('Run Tests') {
+      steps {
+        echo "done testing"
+      }
+    }
+
+    stage('cleaning') {
+      steps {
+        sh 'docker compose down || true'
+      }
+    }
+
+  }
 }
