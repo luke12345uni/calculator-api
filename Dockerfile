@@ -5,7 +5,6 @@ WORKDIR /code
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.tx
 
-
 COPY . .
 
 EXPOSE 8000

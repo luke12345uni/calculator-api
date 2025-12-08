@@ -26,6 +26,8 @@ def main():
 
         choice = input("Enter choice (1-5): ")
 
+        choice = os.getenv('OPERATION_CHOICE', '1')
+
         if choice == "5":
             print("Goodbye!")
             break
