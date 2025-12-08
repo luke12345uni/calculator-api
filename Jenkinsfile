@@ -25,11 +25,11 @@ pipeline {
                 DOCKER_HUB_CREDENTIALS = credentials('dockerhub-credentials')
             }
             steps {
-                script {
+                
                     sh ''' 
                       docker push ${IMAGE_NAME}:latest
                     '''
-                }
+                
             }
         }
     }
