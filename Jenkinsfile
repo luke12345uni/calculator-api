@@ -45,7 +45,7 @@ pipeline {
             steps {
                 
                     sh ''' 
-                      docker push ${IMAGE_NAME}:1.0
+                      docker push ${IMAGE_NAME}:latest
                     '''
                 
             }
