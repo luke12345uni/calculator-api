@@ -30,7 +30,7 @@ def main():
     # Replace input() with a fixed value for automation
     choice = "1"  # This is a predefined choice (could also be passed as an environment variable)
     
-    time.sleep(45)
+    time.sleep(120)
     if choice == "1":
         # Perform addition
         print("Addition selected.")

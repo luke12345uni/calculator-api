@@ -1,6 +1,11 @@
 pipeline {
     agent any
 
+    environment {
+        IMAGE_NAME = 'bassam2080/myapp4-web'
+        DOCKERHUB = credentials('dockerhub-credentials')
+    }
+
     stages {
         stage('Run Tests') {
             steps {
@@ -21,9 +26,6 @@ pipeline {
         }
 
         stage('Push Docker Image') {
-            environment {
-                DOCKER_HUB_CREDENTIALS = credentials('dockerhub-credentials')
-            }
             steps {
                 
                     sh ''' 
