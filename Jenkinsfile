@@ -1,114 +1,39 @@
 pipeline {
-
     agent any
 
-    environment {
-        APP_NAME      = "calculator-api"
-        DOCKER_IMAGE  = "luke12345uni/calculator-api"
-    }
-
     stages {
-
-
-        stage('Checkout') {
+        stage('Run Tests') {
             steps {
-                git branch: 'main', url: 'https://github.com/luke12345uni/calculator-api.git'
+                sh 'pytest'
             }
         }
 
-
-        stage('Test Calculator API') {
-            agent {
-                docker {
-                    image 'python3'
-                }
-            }
+        stage('Run Calculator Script') {
             steps {
-                sh '''
-                    pip install -r requirements.txt
-                    pytest
-                '''
+                sh 'python3 main.py'
             }
         }
-
-
-
-        stage('Export Test Report') {
-            agent {
-                docker {
-                    image 'python3'
-                }
-            }
-            steps {
-                sh '''
-                    pip install -r requirements.txt
-                    pytest --junitxml=report.xml || true
-                '''
-                junit 'report.xml'
-                archiveArtifacts artifacts: 'report.xml', onlyIfSuccessful: false
-            }
-        }
-
-
-
-        stage('Read Version') {
-            steps {
-                script {
-                    env.APP_VERSION = sh(script: "cat VERSION | tr -d '\\n'", returnStdout: true).trim()
-                    echo "Releasing version: ${env.APP_VERSION}"
-                }
-            }
-        }
-
-
 
         stage('Build Docker Image') {
             steps {
-                sh '''
-                    docker build -t ${DOCKER_IMAGE}:${APP_VERSION} .
-                    docker tag ${DOCKER_IMAGE}:${APP_VERSION} ${DOCKER_IMAGE}:latest
-                '''
+                sh 'docker build -t calculator-app:latest .'
             }
         }
-
-
 
         stage('Push Docker Image') {
             environment {
-                DOCKER_HUB = credentials('dockerhub-credentials')
+                DOCKER_HUB_CREDENTIALS = credentials('dockerhub-credentials')
             }
             steps {
-                sh '''
-                    echo "$DOCKER_HUB_PSW" | docker login -u "$DOCKER_HUB_USR" --password-stdin
+                script {
+                    sh '''
+                    echo "$DOCKER_HUB_CREDENTIALS_PSW" | docker login -u "$DOCKER_HUB_CREDENTIALS_USR" --password-stdin
                     docker push ${DOCKER_IMAGE}:${APP_VERSION}
                     docker push ${DOCKER_IMAGE}:latest
-                    docker logout || true
-                '''
-            }
-        }
-
-
-
-        stage('Tag Release in GitHub') {
-            steps {
-                sh '''
-                    git config user.email "jenkins@localhost"
-                    git config user.name "Jenkins CI"
-
-                    git tag -a "v${APP_VERSION}" -m "Release ${APP_VERSION}"
-                    git push origin "v${APP_VERSION}" || echo "Tag already exists or push skipped"
-                '''
+                    docker logout
+                    '''
+                }
             }
         }
     }
-
-
-
-    post {
-        always {
-            echo "Build completed. Cleaning up workspace..."
-            cleanWs()
-        }
-    }
-
 }
