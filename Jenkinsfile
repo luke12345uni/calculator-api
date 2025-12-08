@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = 'bassam2080/myapp4-web'
+        IMAGE_NAME = 'luke1567/main'
         DOCKERHUB = credentials('dockerhub-credentials')
     }
 
