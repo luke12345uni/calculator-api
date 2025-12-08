@@ -30,7 +30,10 @@ def main():
     
     if choice == "1":
         # Perform addition
-        pass
+        print("Addition selected.")
+        result = add(5, 3)
+        print(f"Result: {result}")
+
     elif choice == "2":
         # Perform subtraction
         pass
