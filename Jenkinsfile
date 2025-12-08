@@ -26,11 +26,8 @@ pipeline {
             }
             steps {
                 script {
-                    sh '''
-                    echo "$DOCKER_HUB_CREDENTIALS_PSW" | docker login -u "$DOCKER_HUB_CREDENTIALS_USR" --password-stdin
-                    docker push ${DOCKER_IMAGE}:${APP_VERSION}
-                    docker push ${DOCKER_IMAGE}:latest
-                    docker logout
+                    sh ''' 
+                      docker push ${IMAGE_NAME}:latest
                     '''
                 }
             }
