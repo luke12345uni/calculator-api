@@ -19,9 +19,25 @@ pipeline {
             }
         }
 
-        stage('Build Docker Image') {
+        // stage('Build Docker Image') {
+        //     steps {
+        //         sh 'docker build -t calculator-app:latest .'
+        //     }
+        // }
+
+        stage('Docker Login') {
             steps {
-                sh 'docker build -t calculator-app:latest .'
+                sh 'echo "$DOCKERHUB_PSW" | docker login -u "$DOCKERHUB_USR" --password-stdin'
+            }
+        }
+                stage('Build image') {
+            steps {
+                sh '''
+                docker build \
+                    -t ${IMAGE_NAME}:${BUILD_NUMBER} \
+                    -t ${IMAGE_NAME}:latest \
+                    .
+                '''
             }
         }
 
@@ -29,7 +45,7 @@ pipeline {
             steps {
                 
                     sh ''' 
-                      docker push ${IMAGE_NAME}:latest
+                      docker push ${IMAGE_NAME}:1.0
                     '''
                 
             }
