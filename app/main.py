@@ -1,55 +1,59 @@
-import time
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from urllib.parse import urlparse, parse_qs
+import json
 
-def add(a, b):
-    return a + b
+class CalculatorHandler(BaseHTTPRequestHandler):
 
-def subtract(a, b):
-    return a - b
+    def do_GET(self):
+        parsed = urlparse(self.path)
 
-def multiply(a, b):
-    return a * b
+        if parsed.path != "/calculate":
+            self.send_response(404)
+            self.end_headers()
+            return
 
-def divide(a, b):
-    if b == 0:
-        raise ValueError("Division by zero is not allowed.")
-    return a / b
+        params = parse_qs(parsed.query)
 
-def main():
-    print("Simple Calculator")
-    print("-----------------")
-    print("Choose operation:")
-    print("1. Add")
-    print("2. Subtract")
-    print("3. Multiply")
-    print("4. Divide")
-    print("5. Exit")
-    
-    # Original line causing the error
-    # choice = input("Enter choice (1-5): ")
+        try:
+            a = float(params["a"][0])
+            b = float(params["b"][0])
+            op = params["op"][0]
+        except (KeyError, ValueError):
+            self.send_response(400)
+            self.end_headers()
+            return
 
-    # Replace input() with a fixed value for automation
-    choice = "1"  # This is a predefined choice (could also be passed as an environment variable)
-    
-    time.sleep(120)
-    if choice == "1":
-        # Perform addition
-        print("Addition selected.")
-        result = add(5, 3)
-        print(f"Result: {result}")
+        result = self.calculate(a, b, op)
 
-    elif choice == "2":
-        # Perform subtraction
-        pass
-    elif choice == "3":
-        # Perform multiplication
-        pass
-    elif choice == "4":
-        # Perform division
-        pass
-    elif choice == "5":
-        # Exit
-        pass
+        response = {
+            "a": a,
+            "b": b,
+            "operator": op,
+            "result": result
+        }
+
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.end_headers()
+        self.wfile.write(json.dumps(response).encode())
+
+    def calculate(self, a, b, op):
+        if op == "+":
+            return a + b
+        if op == "-":
+            return a - b
+        if op == "*":
+            return a * b
+        if op == "/":
+            return None if b == 0 else a / b
+        return None
+
+
+def run():
+    server = HTTPServer(("0.0.0.0", 8080), CalculatorHandler)
+    print("Calculator server running on port 8080")
+    server.serve_forever()
 
 
 if __name__ == "__main__":
-    main()
+    run()
