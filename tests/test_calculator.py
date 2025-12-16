@@ -1,31 +1,57 @@
-from app.main import CalculatorHandler
+from calculator_server import CalculatorHandler
 import pytest
 import json
 from unittest import mock
 from http import HTTPStatus
-import io # Although not explicitly used, good practice to import for I/O simulation
+import io
 
-# --- Fixtures ---
+# --- Helper Class to Mock the Request Components ---
+
+class MockSocketRequest:
+    """A minimal mock class that simulates the connection object passed to the Handler."""
+    
+    # We provide a mock file-like object for input (rfile) that can be read.
+    # We just need to mock the minimum necessary to instantiate the handler.
+    rfile = io.BytesIO(b'') # A mock stream for reading the request
+    
+    # We need a BytesIO object for output (wfile) to capture the response data.
+    wfile = io.BytesIO()
+
+    def makefile(self, *args, **kwargs):
+        """Mock the makefile method that BaseHTTPRequestHandler uses."""
+        # This implementation is often sufficient, but for robust mocking, 
+        # we often use BytesIO objects directly or mocks that have a read/write interface.
+        return mock.Mock() 
+
+    def getsockname(self):
+        return ('127.0.0.1', 8080)
+
+# --- CORRECTED Fixture ---
 
 @pytest.fixture
 def handler():
-    # The fix: Patch BaseHTTPRequestHandler.__init__ to prevent it from immediately
-    # calling self.handle() and attempting to read the socket, which fails with mocks.
-    with mock.patch('http.server.BaseHTTPRequestHandler.__init__'):
-        # Instantiate the handler (actual init is skipped by the patch)
-        handler = CalculatorHandler(
-            request=mock.Mock(), 
-            client_address=('127.0.0.1', 12345), 
-            server=mock.Mock()
-        )
+    # Instantiate the handler with the minimal necessary mock objects.
+    # The MockSocketRequest class provides the rfile and wfile objects that BaseHTTPRequestHandler
+    # needs to initialize without crashing.
 
-    # Manually set the required mock attributes that BaseHTTPRequestHandler normally sets
-    # and that the tests rely on.
-    handler.rfile = mock.Mock() # Mock the input file stream
-    handler.wfile = mock.Mock() # Mock the output file stream for writing the response body
+    request = MockSocketRequest()
+    
+    # Instantiate the handler normally. Since MockSocketRequest provides the I/O streams, 
+    # the base class's __init__ will not immediately crash.
+    handler = CalculatorHandler(
+        request=request, 
+        client_address=('127.0.0.1', 12345), 
+        server=mock.Mock()
+    )
+
+    # Now, mock the methods that handle sending the *response* headers/status.
+    # We do NOT mock rfile/wfile here, as they are provided by MockSocketRequest.
     handler.send_response = mock.Mock()
     handler.send_header = mock.Mock()
     handler.end_headers = mock.Mock()
+    
+    # We keep the wfile from the MockSocketRequest object, as it captures the response data.
+    handler.wfile = request.wfile 
     handler.path = "" # Path will be set by each test before calling do_GET
     
     return handler
@@ -48,17 +74,14 @@ def test_calculate_divide(handler):
     assert handler.calculate(10, 4, "/") == 2.5
 
 def test_calculate_divide_by_zero(handler):
-    # The calculate method returns None on division by zero
     assert handler.calculate(10, 0, "/") is None
 
 def test_calculate_invalid_op(handler):
-    # The calculate method returns None for an unknown operator
     assert handler.calculate(10, 5, "**") is None
 
 # --- Tests for the do_GET method (HTTP Handler Test) ---
 
 def test_do_get_success_add(handler):
-    # Simulate the request path/query
     handler.path = "/calculate?a=10&b=5&op=+"
     handler.do_GET()
 
@@ -75,8 +98,13 @@ def test_do_get_success_add(handler):
         "operator": "+",
         "result": 15.0
     }
-    # Check the call to the mocked wfile.write (response body as bytes)
-    handler.wfile.write.assert_called_once_with(json.dumps(expected_response).encode())
+    # Check the data captured in the BytesIO object
+    handler.wfile.seek(0)
+    written_data = handler.wfile.read()
+    
+    # Since wfile.write is not mocked, we check the content of the stream.
+    # The output is compared to the expected JSON, encoded to bytes.
+    assert written_data == json.dumps(expected_response).encode()
 
 
 def test_do_get_404_wrong_path(handler):
@@ -86,35 +114,37 @@ def test_do_get_404_wrong_path(handler):
     # 1. Check response code
     handler.send_response.assert_called_once_with(HTTPStatus.NOT_FOUND)
     
-    # 2. Check that the main logic (wfile.write) was NOT called
-    handler.wfile.write.assert_not_called()
+    # 2. Check that no body data was written
+    handler.wfile.seek(0)
+    assert handler.wfile.read() == b''
     handler.end_headers.assert_called_once()
 
+
 def test_do_get_400_missing_param(handler):
-    # Missing 'b' parameter
     handler.path = "/calculate?a=10&op=+"
     handler.do_GET()
 
     # Check response code
     handler.send_response.assert_called_once_with(HTTPStatus.BAD_REQUEST)
-    handler.wfile.write.assert_not_called()
+    handler.wfile.seek(0)
+    assert handler.wfile.read() == b''
     handler.end_headers.assert_called_once()
 
 def test_do_get_400_invalid_number_param(handler):
-    # 'a' is not a valid float
     handler.path = "/calculate?a=ten&b=5&op=+"
     handler.do_GET()
 
     # Check response code
     handler.send_response.assert_called_once_with(HTTPStatus.BAD_REQUEST)
-    handler.wfile.write.assert_not_called()
+    handler.wfile.seek(0)
+    assert handler.wfile.read() == b''
     handler.end_headers.assert_called_once()
 
 def test_do_get_200_divide_by_zero_result_none(handler):
     handler.path = "/calculate?a=10&b=0&op=/"
     handler.do_GET()
 
-    # 1. Check response code (still 200, as the server handled the request gracefully)
+    # 1. Check response code 
     handler.send_response.assert_called_once_with(HTTPStatus.OK)
 
     # 2. Check response body for "result": None
@@ -124,4 +154,6 @@ def test_do_get_200_divide_by_zero_result_none(handler):
         "operator": "/",
         "result": None 
     }
-    handler.wfile.write.assert_called_once_with(json.dumps(expected_response).encode())
+    handler.wfile.seek(0)
+    written_data = handler.wfile.read()
+    assert written_data == json.dumps(expected_response).encode()
