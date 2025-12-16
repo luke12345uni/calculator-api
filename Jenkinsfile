@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = 'luke1567/main'
+        IMAGE_NAME = 'luke1567/calc9'
         DOCKERHUB = credentials('dockerhub-credentials')
     }
 
