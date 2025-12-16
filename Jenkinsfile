@@ -13,11 +13,11 @@ pipeline {
             }
         }
 
-        stage('Run Calculator Script') {
-            steps {
-                sh 'python3 app/main.py'
-            }
-        }
+        // stage('Run Calculator Script') {
+        //     steps {
+        //         sh 'python3 app/main.py'
+        //     }
+        // }
 
         // stage('Build Docker Image') {
         //     steps {
