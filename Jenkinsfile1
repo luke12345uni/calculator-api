@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         // DockerHub username/password credential
-        DOCKERHUB = credentials('dockerhub-credentials')
+        DOCKERHUB_CREDENTIALS = credentials('DockerHub')
 
         EC2_HOST = '54.87.9.203'
         EC2_USER = 'ec2-user'
@@ -13,7 +13,7 @@ pipeline {
         stage('Docker Login') {
             steps {
                 sh '''
-                    sh 'echo "$DOCKERHUB_PSW" | docker login -u "$DOCKERHUB_USR" --password-stdin'
+                    sh echo "$DOCKERHUB_CREDENTIALS_PSW" | docker login -u "$DOCKERHUB_CREDENTIALS_USR" --password-stdin
                 '''
             }
         }
