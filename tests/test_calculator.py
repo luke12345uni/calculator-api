@@ -3,24 +3,31 @@ import pytest
 import json
 from unittest import mock
 from http import HTTPStatus
+import io # Although not explicitly used, good practice to import for I/O simulation
 
 # --- Fixtures ---
 
-# A fixture to provide a mocked CalculatorHandler instance for each test
 @pytest.fixture
 def handler():
-    # Mock the required BaseHTTPRequestHandler attributes
-    # wfile.write is what sends the actual response data
-    handler = CalculatorHandler(
-        request=mock.Mock(), # A mock for the socket request
-        client_address=('127.0.0.1', 12345), # A dummy address
-        server=mock.Mock() # A mock for the server instance
-    )
-    # Mock methods that BaseHTTPRequestHandler calls to send the response
+    # The fix: Patch BaseHTTPRequestHandler.__init__ to prevent it from immediately
+    # calling self.handle() and attempting to read the socket, which fails with mocks.
+    with mock.patch('http.server.BaseHTTPRequestHandler.__init__'):
+        # Instantiate the handler (actual init is skipped by the patch)
+        handler = CalculatorHandler(
+            request=mock.Mock(), 
+            client_address=('127.0.0.1', 12345), 
+            server=mock.Mock()
+        )
+
+    # Manually set the required mock attributes that BaseHTTPRequestHandler normally sets
+    # and that the tests rely on.
+    handler.rfile = mock.Mock() # Mock the input file stream
+    handler.wfile = mock.Mock() # Mock the output file stream for writing the response body
     handler.send_response = mock.Mock()
     handler.send_header = mock.Mock()
     handler.end_headers = mock.Mock()
-    handler.wfile = mock.Mock()
+    handler.path = "" # Path will be set by each test before calling do_GET
+    
     return handler
 
 # --- Tests for the calculate method (Pure Function Test) ---
@@ -51,7 +58,7 @@ def test_calculate_invalid_op(handler):
 # --- Tests for the do_GET method (HTTP Handler Test) ---
 
 def test_do_get_success_add(handler):
-    # Set the path that the handler will parse
+    # Simulate the request path/query
     handler.path = "/calculate?a=10&b=5&op=+"
     handler.do_GET()
 
@@ -68,7 +75,7 @@ def test_do_get_success_add(handler):
         "operator": "+",
         "result": 15.0
     }
-    # The response is written to wfile as bytes, so we check the mock call arguments
+    # Check the call to the mocked wfile.write (response body as bytes)
     handler.wfile.write.assert_called_once_with(json.dumps(expected_response).encode())
 
 
@@ -81,7 +88,6 @@ def test_do_get_404_wrong_path(handler):
     
     # 2. Check that the main logic (wfile.write) was NOT called
     handler.wfile.write.assert_not_called()
-    # end_headers is called after send_response for 404
     handler.end_headers.assert_called_once()
 
 def test_do_get_400_missing_param(handler):
@@ -108,7 +114,7 @@ def test_do_get_200_divide_by_zero_result_none(handler):
     handler.path = "/calculate?a=10&b=0&op=/"
     handler.do_GET()
 
-    # 1. Check response code (still 200, as the server handles the operation, but the result is None)
+    # 1. Check response code (still 200, as the server handled the request gracefully)
     handler.send_response.assert_called_once_with(HTTPStatus.OK)
 
     # 2. Check response body for "result": None
@@ -116,6 +122,6 @@ def test_do_get_200_divide_by_zero_result_none(handler):
         "a": 10.0,
         "b": 0.0,
         "operator": "/",
-        "result": None # The handler's calculate method returns None here
+        "result": None 
     }
     handler.wfile.write.assert_called_once_with(json.dumps(expected_response).encode())
