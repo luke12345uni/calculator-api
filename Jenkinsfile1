@@ -1,0 +1,76 @@
+pipeline {
+    agent any
+
+    environment {
+        // DockerHub username/password credential
+        DOCKERHUB = credentials('dockerhub-credentials')
+
+        EC2_HOST = '54.87.9.203'
+        EC2_USER = 'ec2-user'
+    }
+
+    stages {
+        stage('Docker Login') {
+            steps {
+                sh '''
+                    echo "$DOCKERHUB_CREDENTIALS_PSW" | docker login -u "$DOCKERHUB_CREDENTIALS_USR" --password-stdin
+                '''
+            }
+        }
+
+        stage('Build & Push Docker Image') {
+            steps {
+                sh '''
+                    docker stop calc9 || true
+                    docker rm calc9 || true
+                    docker rmi luke1567/calc9 || true
+
+                    docker build -t luke1567/calc9 .
+                    docker push luke1567/calc9
+                '''
+            }
+        }
+
+        stage('Deploy to EC2') {
+            steps {
+                // *** USE EXACTLY THE ID FROM THE SNIPPET GENERATOR HERE ***
+                sshagent (credentials: ['54.87.9.203']) {
+                    sh '''
+                        ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} << 'EOF'
+# -------- Amazon Linux setup --------
+sudo yum update -y
+
+if ! command -v docker &> /dev/null
+then
+    if command -v amazon-linux-extras &> /dev/null; then
+        sudo amazon-linux-extras install docker -y
+    else
+        sudo yum install -y docker
+    fi
+    sudo systemctl start docker
+    sudo systemctl enable docker
+fi
+
+sudo docker pull luke1567/calc9
+sudo docker stop myapp-container || true
+sudo docker rm myapp-container || true
+sudo docker run -d --name myapp-container -p 5000:80 luke1567/calc9
+EOF
+                    '''
+                }
+            }
+        }
+
+        stage('Clean') {
+            steps {
+                echo "Cleaning up..."
+            }
+        }
+    }
+
+    post {
+        always {
+            echo "Pipeline completed."
+        }
+    }
+}
