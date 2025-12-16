@@ -1,4 +1,4 @@
-from calculator_server import CalculatorHandler
+from app.main import CalculatorHandler
 import pytest
 import json
 from unittest import mock
