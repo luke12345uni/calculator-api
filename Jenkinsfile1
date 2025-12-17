@@ -52,9 +52,9 @@ then
 fi
 
 sudo docker pull luke1567/calc9
-sudo docker stop myapp-container || true
-sudo docker rm myapp-container || true
-sudo docker run -d --name myapp-container -p 5000:80 luke1567/calc9
+sudo docker stop my_calc9 || true
+sudo docker rm my_calc9 || true
+sudo docker run -d --name my_calc9 -p 5000:80 luke1567/calc9
 EOF
                     '''
                 }
