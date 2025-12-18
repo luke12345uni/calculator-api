@@ -10,4 +10,4 @@ COPY . .
 EXPOSE 80
 
 # CMD ["main:app", "--host", "0.0.0.0", "--port", "8000"]
-CMD ["python", "main.py"]
+CMD ["python", "main.py"] 
