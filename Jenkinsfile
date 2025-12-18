@@ -13,6 +13,23 @@ pipeline {
             }
         }
 
+    
+    stage('Export Test Report') {
+        steps {
+            // run pytest again just to produce XML 
+
+            sh 'pytest --junitxml=report.xml || true' 
+
+            // show results in Jenkins 
+
+            junit 'report.xml' 
+
+            // let us download the xml 
+
+            archiveArtifacts artifacts: 'report.xml', onlyIfSuccessful: false
+            }
+        }
+
         // stage('Run Calculator Script') {
         //     steps {
         //         sh 'python3 app/main.py'
